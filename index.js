@@ -9,6 +9,7 @@ morgan.token('http-post-req-body', function(req) {
 });
 
 app.use(cors());
+app.use(express.static("build"));
 app.use(morgan(":method :url :status :res[content-length] - :response-time ms :http-post-req-body"));
 app.use(express.json());
 
