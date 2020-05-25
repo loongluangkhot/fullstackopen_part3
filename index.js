@@ -1,11 +1,12 @@
 require("dotenv").config();
 const express = require("express");
+
 const app = express();
 const morgan = require("morgan");
 const cors = require("cors");
 const Entry = require("./models/entry");
 
-morgan.token("http-post-req-body", function (req) {
+morgan.token("http-post-req-body", (req) => {
   if (req.method === "POST") return JSON.stringify(req.body);
   return " ";
 });
@@ -15,8 +16,8 @@ app.use(express.json());
 app.use(express.static("build"));
 app.use(
   morgan(
-    ":method :url :status :res[content-length] - :response-time ms :http-post-req-body"
-  )
+    ":method :url :status :res[content-length] - :response-time ms :http-post-req-body",
+  ),
 );
 
 app.get("/api/persons", (req, res) => {
@@ -26,7 +27,7 @@ app.get("/api/persons", (req, res) => {
 });
 
 app.get("/api/persons/:id", (req, res, next) => {
-  const id = req.params.id;
+  const { id } = req.params;
   Entry.findById(id)
     .then((result) => {
       if (!result) res.status(404).end();
@@ -36,8 +37,8 @@ app.get("/api/persons/:id", (req, res, next) => {
 });
 
 app.put("/api/persons/:id", (req, res, next) => {
-  const id = req.params.id;
-  const body = req.body;
+  const { id } = req.params;
+  const { body } = req;
   Entry.findOneAndUpdate({ _id: id }, { number: body.number }, { new: true })
     .then((result) => {
       if (!result) res.status(404).end();
@@ -47,16 +48,16 @@ app.put("/api/persons/:id", (req, res, next) => {
 });
 
 app.delete("/api/persons/:id", (req, res, next) => {
-  const id = req.params.id;
+  const { id } = req.params;
   Entry.deleteOne({ _id: id })
-    .then((result) => {
+    .then(() => {
       res.status(204).end();
     })
     .catch((err) => next(err));
 });
 
 app.post("/api/persons", (req, res, next) => {
-  const body = req.body;
+  const { body } = req;
   const newEntry = new Entry({
     name: body.name,
     number: body.number,
@@ -83,7 +84,7 @@ const unknownEndpoint = (req, res) => {
 };
 app.use(unknownEndpoint);
 
-const errorHandler = (err, req, res, next) => {
+const errorHandler = (err, req, res) => {
   console.log(err);
   res.status(400).send(err.message);
 };
