@@ -1,75 +1,76 @@
-require('dotenv').config();
-const express = require('express');
+require("dotenv").config();
+const express = require("express");
 const app = express();
 const morgan = require("morgan");
 const cors = require("cors");
 const Entry = require("./models/entry");
 
-morgan.token('http-post-req-body', function(req) {
-  if(req.method === "POST") return JSON.stringify(req.body);
+morgan.token("http-post-req-body", function (req) {
+  if (req.method === "POST") return JSON.stringify(req.body);
   return " ";
 });
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static("build"));
-app.use(morgan(":method :url :status :res[content-length] - :response-time ms :http-post-req-body"));
+app.use(
+  morgan(
+    ":method :url :status :res[content-length] - :response-time ms :http-post-req-body"
+  )
+);
 
 app.get("/api/persons", (req, res) => {
-  Entry.find({}).then(result => {
+  Entry.find({}).then((result) => {
     res.json(result);
   });
 });
 
-app.get("/api/persons/:id", (req, res) => {
+app.get("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
-  Entry
-    .findById(id)
-    .then(result => {
-      if(!result) res.status(404).end();
+  Entry.findById(id)
+    .then((result) => {
+      if (!result) res.status(404).end();
       res.json(result);
     })
-    .catch(err => next(err));
+    .catch((err) => next(err));
 });
 
-app.put("/api/persons/:id", (req, res) => {
+app.put("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
   const body = req.body;
-  Entry
-    .findOneAndUpdate({_id: id}, {number: body.number}, {new: true})
-    .then(result => {
-      if(!result) res.status(404).end();
+  Entry.findOneAndUpdate({ _id: id }, { number: body.number }, { new: true })
+    .then((result) => {
+      if (!result) res.status(404).end();
       res.json(result);
     })
-    .catch(err => next(err));
+    .catch((err) => next(err));
 });
 
-app.delete("/api/persons/:id", (req, res) => {
+app.delete("/api/persons/:id", (req, res, next) => {
   const id = req.params.id;
-  Entry
-    .deleteOne({_id: id})
-    .then(result => {
+  Entry.deleteOne({ _id: id })
+    .then((result) => {
       res.status(204).end();
     })
-    .catch(err => next(err));
+    .catch((err) => next(err));
 });
 
-app.post("/api/persons", (req, res) => {
+app.post("/api/persons", (req, res, next) => {
   const body = req.body;
   const newEntry = new Entry({
     name: body.name,
-    number: body.number
+    number: body.number,
   });
   newEntry
     .save()
-    .then(result => {
+    .then((result) => {
       res.json(result);
     })
-    .catch(err => next(err));
+    .catch((err) => next(err));
 });
 
 app.get("/info", (req, res) => {
-  Entry.find({}).then(result => {
+  Entry.find({}).then((result) => {
     res.send(`
       <p>Phonebook has info for ${result.length} people</p>
       <p>${new Date()}</p>
@@ -78,18 +79,17 @@ app.get("/info", (req, res) => {
 });
 
 const unknownEndpoint = (req, res) => {
-  res.status(404).send({error: 'unknown endpoint'});
-}
+  res.status(404).send({ error: "unknown endpoint" });
+};
 app.use(unknownEndpoint);
 
 const errorHandler = (err, req, res, next) => {
   console.log(err);
-  res.status(400).send(new Error(err));
-}
+  res.status(400).send(err.message);
+};
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`)
+  console.log(`Server running on port ${PORT}`);
 });
-
